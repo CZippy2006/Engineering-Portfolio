@@ -10,8 +10,7 @@ import {
   LayoutGrid, 
   List, 
   GitCommit,
-  SlidersHorizontal,
-  Settings
+  Shield
 } from "lucide-react";
 
 const LinkedinIcon = ({ size = 18, color = "currentColor" }) => (
@@ -33,14 +32,14 @@ export const Navbar = () => {
   const {
     firebaseConfigured,
     adminMode,
+    isViewOnly,
     toggleAdminMode,
     searchQuery,
     setSearchQuery,
     viewMode,
     setViewMode,
     setEditingProject,
-    setIsConfigModalOpen,
-    projects
+    setIsConfigModalOpen
   } = usePortfolio();
 
   return (
@@ -228,41 +227,63 @@ export const Navbar = () => {
             </button>
           </div>
 
-          {/* Firebase Settings Button */}
-          <button
-            className="btn-secondary"
-            onClick={() => setIsConfigModalOpen(true)}
-            title="Configure Google Firebase"
-            style={{ fontSize: "0.85rem", padding: "0.5rem 0.8rem" }}
-          >
-            <Database size={16} style={{ color: firebaseConfigured ? "var(--accent-emerald)" : "var(--accent-amber)" }} />
-            <span>Firebase</span>
-          </button>
+          {/* View Only Recruiter Badge or Admin Controls */}
+          {isViewOnly ? (
+            <div style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              padding: "0.45rem 0.85rem",
+              borderRadius: "9999px",
+              background: "rgba(0, 242, 254, 0.08)",
+              border: "1px solid rgba(0, 242, 254, 0.25)",
+              color: "var(--accent-cyan)",
+              fontSize: "0.8rem",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600
+            }}>
+              <Shield size={14} />
+              <span>Public View Only</span>
+            </div>
+          ) : (
+            <>
+              {/* Firebase Settings Button */}
+              <button
+                className="btn-secondary"
+                onClick={() => setIsConfigModalOpen(true)}
+                title="Configure Google Firebase"
+                style={{ fontSize: "0.85rem", padding: "0.5rem 0.8rem" }}
+              >
+                <Database size={16} style={{ color: firebaseConfigured ? "var(--accent-emerald)" : "var(--accent-amber)" }} />
+                <span>Firebase</span>
+              </button>
 
-          {/* Admin Studio Toggle */}
-          <button
-            onClick={() => toggleAdminMode()}
-            className={adminMode ? "btn-primary" : "btn-secondary"}
-            style={{
-              fontSize: "0.85rem",
-              padding: "0.5rem 0.9rem",
-              background: adminMode ? "linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan))" : undefined
-            }}
-          >
-            {adminMode ? <Unlock size={16} /> : <Lock size={16} />}
-            <span>{adminMode ? "Studio Mode ON" : "Edit / Add"}</span>
-          </button>
+              {/* Admin Studio Toggle */}
+              <button
+                onClick={() => toggleAdminMode()}
+                className={adminMode ? "btn-primary" : "btn-secondary"}
+                style={{
+                  fontSize: "0.85rem",
+                  padding: "0.5rem 0.9rem",
+                  background: adminMode ? "linear-gradient(135deg, var(--accent-emerald), var(--accent-cyan))" : undefined
+                }}
+              >
+                {adminMode ? <Unlock size={16} /> : <Lock size={16} />}
+                <span>{adminMode ? "Studio Mode ON" : "Edit / Add"}</span>
+              </button>
 
-          {/* Add Project Button (Shown if Admin Mode is active) */}
-          {adminMode && (
-            <button
-              className="btn-primary"
-              onClick={() => setEditingProject({ isNew: true })}
-              style={{ fontSize: "0.85rem", padding: "0.5rem 0.9rem" }}
-            >
-              <PlusCircle size={16} />
-              <span>New Project</span>
-            </button>
+              {/* Add Project Button (Shown if Admin Mode is active) */}
+              {adminMode && (
+                <button
+                  className="btn-primary"
+                  onClick={() => setEditingProject({ isNew: true })}
+                  style={{ fontSize: "0.85rem", padding: "0.5rem 0.9rem" }}
+                >
+                  <PlusCircle size={16} />
+                  <span>New Project</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -29,20 +29,44 @@ export const usePortfolio = () => {
   return context;
 };
 
+const checkIsViewOnlyMode = () => {
+  if (typeof window === "undefined") return false;
+  const hostname = window.location.hostname;
+  const params = new URLSearchParams(window.location.search);
+  
+  if (params.get("viewOnly") === "true" || params.get("mode") === "view" || params.get("readOnly") === "true" || params.get("public") === "true") {
+    return true;
+  }
+  
+  if (hostname.includes("engineering-portfolio-public") || hostname.includes("public") || hostname.includes("recruiter") || hostname.includes("view")) {
+    return true;
+  }
+  
+  return false;
+};
+
 export const PortfolioProvider = ({ children }) => {
+  const [isViewOnly] = useState(checkIsViewOnlyMode);
   const [firebaseConfig, setFirebaseConfig] = useState(getSavedFirebaseConfig());
   const [firebaseStatus, setFirebaseStatus] = useState({ isConfigured: false, db: null, storage: null, auth: null });
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [adminMode, setAdminMode] = useState(() => {
+  const [rawAdminMode, setAdminMode] = useState(() => {
     return localStorage.getItem(ADMIN_MODE_KEY) === "true";
   });
+  
+  const adminMode = isViewOnly ? false : rawAdminMode;
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // grid, compact, timeline
   const [selectedProject, setSelectedProject] = useState(null);
-  const [editingProject, setEditingProject] = useState(null); // null when not editing/adding
+  const [editingProject, setEditingProjectState] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+
+  const setEditingProject = (proj) => {
+    if (isViewOnly) return;
+    setEditingProjectState(proj);
+  };
 
   // Read local projects
   const getLocalProjects = () => {
@@ -128,7 +152,8 @@ export const PortfolioProvider = ({ children }) => {
 
   // Toggle Admin / Edit Mode
   const toggleAdminMode = (status) => {
-    const nextVal = status !== undefined ? status : !adminMode;
+    if (isViewOnly) return;
+    const nextVal = status !== undefined ? status : !rawAdminMode;
     setAdminMode(nextVal);
     localStorage.setItem(ADMIN_MODE_KEY, String(nextVal));
   };
@@ -269,6 +294,7 @@ export const PortfolioProvider = ({ children }) => {
         deleteProject,
         uploadMediaFile,
         adminMode,
+        isViewOnly,
         toggleAdminMode,
         activeCategory,
         setActiveCategory,
