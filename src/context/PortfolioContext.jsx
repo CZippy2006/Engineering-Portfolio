@@ -31,14 +31,20 @@ export const usePortfolio = () => {
 
 const checkIsViewOnlyMode = () => {
   if (typeof window === "undefined") return false;
-  const hostname = window.location.hostname;
+  const hostname = window.location.hostname.toLowerCase();
   const params = new URLSearchParams(window.location.search);
   
   if (params.get("viewOnly") === "true" || params.get("mode") === "view" || params.get("readOnly") === "true" || params.get("public") === "true") {
     return true;
   }
   
-  if (hostname.includes("engineering-portfolio-public") || hostname.includes("public") || hostname.includes("recruiter") || hostname.includes("view")) {
+  if (
+    hostname.includes("castillportfolio.com") ||
+    hostname.includes("engineering-portfolio-public") ||
+    hostname.includes("public") ||
+    hostname.includes("recruiter") ||
+    hostname.includes("view")
+  ) {
     return true;
   }
   
