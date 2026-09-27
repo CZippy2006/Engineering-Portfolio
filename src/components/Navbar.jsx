@@ -10,7 +10,13 @@ import {
   LayoutGrid, 
   List, 
   GitCommit,
-  Shield
+  Shield,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Edit3,
+  Key,
+  LogOut
 } from "lucide-react";
 
 const LinkedinIcon = ({ size = 18, color = "currentColor" }) => (
@@ -33,13 +39,21 @@ export const Navbar = () => {
     firebaseConfigured,
     adminMode,
     isViewOnly,
+    isCustomDomainRecruiter,
+    previewRecruiterMode,
+    toggleRecruiterPreview,
     toggleAdminMode,
     searchQuery,
     setSearchQuery,
     viewMode,
     setViewMode,
     setEditingProject,
-    setIsConfigModalOpen
+    setIsConfigModalOpen,
+    setSelectedProject,
+    currentUser,
+    isAuthorizedAdmin,
+    setIsAuthModalOpen,
+    logoutAdmin
   } = usePortfolio();
 
   return (
@@ -62,7 +76,11 @@ export const Navbar = () => {
       }}>
         {/* Brand */}
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+          <div
+            onClick={() => setSelectedProject(null)}
+            title="Return to Engineering Portfolio Home"
+            style={{ display: "flex", alignItems: "center", gap: "0.8rem", cursor: "pointer" }}
+          >
             <div style={{
               width: "42px",
               height: "42px",
@@ -104,7 +122,9 @@ export const Navbar = () => {
                   borderRadius: "50%",
                   background: firebaseConfigured ? "var(--accent-emerald)" : "var(--accent-amber)"
                 }}></span>
-                {firebaseConfigured ? "Firebase Firestore Sync" : "Local Demo Storage"}
+                {isCustomDomainRecruiter
+                  ? (firebaseConfigured ? "Live Portfolio" : "Engineering Showcase")
+                  : (firebaseConfigured ? "Firestore Sync • Editor" : "Local Storage • Editor")}
               </div>
             </div>
           </div>
@@ -227,13 +247,13 @@ export const Navbar = () => {
             </button>
           </div>
 
-          {/* View Only Recruiter Badge or Admin Controls */}
-          {isViewOnly ? (
+          {/* Custom Domain Recruiter View: Clean view-only badge without any admin controls */}
+          {isCustomDomainRecruiter ? (
             <div style={{
               display: "flex",
               alignItems: "center",
-              gap: "0.4rem",
-              padding: "0.45rem 0.85rem",
+              gap: "0.45rem",
+              padding: "0.45rem 0.9rem",
               borderRadius: "9999px",
               background: "rgba(0, 242, 254, 0.08)",
               border: "1px solid rgba(0, 242, 254, 0.25)",
@@ -243,9 +263,39 @@ export const Navbar = () => {
               fontWeight: 600
             }}>
               <Shield size={14} />
-              <span>Public View Only</span>
+              <span>Recruiter View</span>
+            </div>
+          ) : previewRecruiterMode ? (
+            /* Recruiter Preview on Editor Domains (with easy exit back to Edit Mode) */
+            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                padding: "0.45rem 0.85rem",
+                borderRadius: "9999px",
+                background: "rgba(245, 158, 11, 0.12)",
+                border: "1px solid rgba(245, 158, 11, 0.3)",
+                color: "var(--accent-amber)",
+                fontSize: "0.8rem",
+                fontFamily: "var(--font-mono)",
+                fontWeight: 600
+              }}>
+                <Eye size={14} />
+                <span>Recruiter Preview (castillportfolio.com)</span>
+              </div>
+              <button
+                className="btn-primary"
+                onClick={toggleRecruiterPreview}
+                style={{ fontSize: "0.82rem", padding: "0.45rem 0.85rem", gap: "0.4rem" }}
+                title="Return to editing interface"
+              >
+                <Edit3 size={14} />
+                <span>Exit Preview (Back to Edit)</span>
+              </button>
             </div>
           ) : (
+            /* Editor Domains Interface: Default Firebase domains & localhost */
             <>
               {/* Firebase Settings Button */}
               <button
@@ -256,6 +306,68 @@ export const Navbar = () => {
               >
                 <Database size={16} style={{ color: firebaseConfigured ? "var(--accent-emerald)" : "var(--accent-amber)" }} />
                 <span>Firebase</span>
+              </button>
+
+              {/* Admin Auth Status / Login */}
+              {currentUser && isAuthorizedAdmin ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <div
+                    onClick={() => setIsAuthModalOpen(true)}
+                    title={`Authenticated as Christian Astill (${currentUser.email}). Click to manage.`}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.4rem",
+                      padding: "0.45rem 0.75rem",
+                      borderRadius: "9999px",
+                      background: "rgba(16, 185, 129, 0.12)",
+                      border: "1px solid rgba(16, 185, 129, 0.4)",
+                      color: "var(--accent-emerald)",
+                      fontSize: "0.78rem",
+                      fontFamily: "var(--font-mono)",
+                      fontWeight: 600,
+                      cursor: "pointer"
+                    }}
+                  >
+                    <ShieldCheck size={14} />
+                    <span>Owner: {currentUser.email.split("@")[0]}</span>
+                  </div>
+                  <button
+                    onClick={logoutAdmin}
+                    className="btn-secondary"
+                    title="Sign Out"
+                    style={{ padding: "0.45rem 0.55rem", fontSize: "0.75rem", color: "var(--text-muted)" }}
+                  >
+                    <LogOut size={13} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  className="btn-secondary"
+                  onClick={() => setIsAuthModalOpen(true)}
+                  title="Sign in as Christian Astill to unlock private Firestore editing"
+                  style={{
+                    fontSize: "0.82rem",
+                    padding: "0.48rem 0.8rem",
+                    borderColor: "rgba(0, 242, 254, 0.35)",
+                    color: "var(--accent-cyan)",
+                    gap: "0.4rem"
+                  }}
+                >
+                  <Key size={14} />
+                  <span>Admin Login</span>
+                </button>
+              )}
+
+              {/* Recruiter Preview Toggle */}
+              <button
+                className="btn-secondary"
+                onClick={toggleRecruiterPreview}
+                title="Preview what recruiters see on castillportfolio.com"
+                style={{ fontSize: "0.85rem", padding: "0.5rem 0.8rem", gap: "0.4rem" }}
+              >
+                <Eye size={15} />
+                <span>Recruiter Preview</span>
               </button>
 
               {/* Admin Studio Toggle */}
@@ -269,7 +381,7 @@ export const Navbar = () => {
                 }}
               >
                 {adminMode ? <Unlock size={16} /> : <Lock size={16} />}
-                <span>{adminMode ? "Studio Mode ON" : "Edit / Add"}</span>
+                <span>{adminMode ? "Studio Mode ON" : "Studio Mode OFF"}</span>
               </button>
 
               {/* Add Project Button (Shown if Admin Mode is active) */}

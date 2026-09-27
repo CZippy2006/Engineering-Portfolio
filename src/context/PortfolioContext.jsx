@@ -3,7 +3,9 @@ import { INITIAL_PROJECTS } from "../data/initialProjects";
 import { 
   getSavedFirebaseConfig, 
   saveFirebaseConfig, 
-  initFirebaseServices 
+  initFirebaseServices,
+  isUserAuthorizedAdmin,
+  logoutUser
 } from "../firebase";
 import { 
   collection, 
@@ -13,6 +15,7 @@ import {
   setDoc,
   query 
 } from "firebase/firestore";
+import { onAuthStateChanged } from "firebase/auth";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 const LOCAL_STORAGE_PROJECTS_KEY = "eng_portfolio_projects_local";
@@ -29,43 +32,137 @@ export const usePortfolio = () => {
   return context;
 };
 
-const checkIsViewOnlyMode = () => {
-  if (typeof window === "undefined") return false;
-  const hostname = window.location.hostname.toLowerCase();
-  const params = new URLSearchParams(window.location.search);
-  
-  if (params.get("viewOnly") === "true" || params.get("mode") === "view" || params.get("readOnly") === "true" || params.get("public") === "true") {
-    return true;
-  }
-  
-  if (
-    hostname.includes("castillportfolio.com") ||
-    hostname.includes("engineering-portfolio-public") ||
-    hostname.includes("public") ||
-    hostname.includes("recruiter") ||
-    hostname.includes("view")
-  ) {
-    return true;
-  }
-  
-  return false;
-};
+import { isRecruiterDomain, isFirebaseDefaultDomain } from "../utils/domainUtils";
 
 export const PortfolioProvider = ({ children }) => {
-  const [isViewOnly] = useState(checkIsViewOnlyMode);
+  const isCustomDomainRecruiter = isRecruiterDomain();
+
+  // Support manual preview query param (?mode=view, ?viewOnly=true, ?readOnly=true) on editor domains
+  const [previewRecruiterMode, setPreviewRecruiterMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return (
+      params.get("viewOnly") === "true" ||
+      params.get("mode") === "view" ||
+      params.get("readOnly") === "true"
+    );
+  });
+
+  // isViewOnly is true if on castillportfolio.com OR manually previewing recruiter mode
+  const isViewOnly = isCustomDomainRecruiter || previewRecruiterMode;
+
+  const toggleRecruiterPreview = () => {
+    if (isCustomDomainRecruiter) return;
+    const nextPreview = !previewRecruiterMode;
+    setPreviewRecruiterMode(nextPreview);
+    try {
+      const url = new URL(window.location.href);
+      if (nextPreview) {
+        url.searchParams.set("mode", "view");
+      } else {
+        url.searchParams.delete("mode");
+        url.searchParams.delete("viewOnly");
+        url.searchParams.delete("readOnly");
+      }
+      window.history.replaceState({}, "", url.toString());
+    } catch (e) {
+      console.warn("Failed to update URL search params:", e);
+    }
+  };
+
   const [firebaseConfig, setFirebaseConfig] = useState(getSavedFirebaseConfig());
   const [firebaseStatus, setFirebaseStatus] = useState({ isConfigured: false, db: null, storage: null, auth: null });
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Authentication State for Owner Permissions
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const isAuthorizedAdmin = isUserAuthorizedAdmin(currentUser);
+
+  // Listen to Firebase Auth state
+  useEffect(() => {
+    if (firebaseStatus.isConfigured && firebaseStatus.auth) {
+      const unsubscribe = onAuthStateChanged(firebaseStatus.auth, (user) => {
+        setCurrentUser(user);
+        if (user) {
+          console.log("Firebase Auth User:", user.email, "| Authorized:", isUserAuthorizedAdmin(user));
+        } else {
+          console.log("Firebase Auth: No user signed in.");
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [firebaseStatus]);
+
+  const logoutAdmin = async () => {
+    try {
+      await logoutUser();
+      setCurrentUser(null);
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+  };
+
+  // On the two default domains Firebase gives (or localhost), default to true so Christian can edit immediately!
   const [rawAdminMode, setAdminMode] = useState(() => {
-    return localStorage.getItem(ADMIN_MODE_KEY) === "true";
+    if (typeof window !== "undefined" && isRecruiterDomain()) {
+      return false;
+    }
+    const saved = localStorage.getItem(ADMIN_MODE_KEY);
+    if (saved !== null) {
+      return saved === "true";
+    }
+    return true; // Default ON so the editing interface is ready to use
   });
   
   const adminMode = isViewOnly ? false : rawAdminMode;
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState("grid"); // grid, compact, timeline
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProject, setSelectedProjectState] = useState(null);
+
+  const setSelectedProject = (proj) => {
+    setSelectedProjectState(proj);
+    try {
+      const url = new URL(window.location.href);
+      if (proj && proj.id) {
+        url.searchParams.set("project", proj.id);
+        window.history.pushState({ projectId: proj.id }, "", url.toString());
+      } else {
+        url.searchParams.delete("project");
+        window.history.pushState({}, "", url.toString());
+      }
+    } catch (e) {
+      console.warn("Failed to update project URL param:", e);
+    }
+  };
+
+  // Sync selectedProject with URL query parameter ?project=...
+  useEffect(() => {
+    const handleUrlProject = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const projId = params.get("project");
+        if (projId && projects.length > 0) {
+          const found = projects.find((p) => p.id === projId);
+          if (found) {
+            setSelectedProjectState(found);
+            return;
+          }
+        } else if (!projId) {
+          setSelectedProjectState(null);
+        }
+      } catch (e) {
+        console.warn("Error reading project from URL:", e);
+      }
+    };
+
+    handleUrlProject();
+    window.addEventListener("popstate", handleUrlProject);
+    return () => window.removeEventListener("popstate", handleUrlProject);
+  }, [projects]);
+
   const [editingProject, setEditingProjectState] = useState(null);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
@@ -79,7 +176,23 @@ export const PortfolioProvider = ({ children }) => {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_PROJECTS_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge photos/videos captions from initial projects if previously saved without them
+          const upgraded = parsed.map((p) => {
+            const initial = INITIAL_PROJECTS.find((ip) => ip.id === p.id);
+            if (initial) {
+              return {
+                ...initial,
+                ...p,
+                photos: p.photos && p.photos.length > 0 ? p.photos : initial.photos,
+                videos: p.videos && p.videos.length > 0 ? p.videos : initial.videos
+              };
+            }
+            return p;
+          });
+          return upgraded;
+        }
       }
     } catch (e) {
       console.error("Failed to read local projects:", e);
@@ -195,6 +308,10 @@ export const PortfolioProvider = ({ children }) => {
     };
 
     if (firebaseStatus.isConfigured && firebaseStatus.db) {
+      if (!isAuthorizedAdmin) {
+        setIsAuthModalOpen(true);
+        throw new Error("Firestore writing is private. Please sign in as Christian Astill (astillcd@gmail.com) to save new projects.");
+      }
       try {
         // Use setDoc with explicit projId so document ID matches project.id!
         const docRef = doc(firebaseStatus.db, "projects", projId);
@@ -202,7 +319,8 @@ export const PortfolioProvider = ({ children }) => {
         console.log("Saved project to Firestore with ID:", projId);
         return newProj;
       } catch (err) {
-        console.error("Failed to add project to Firestore (saving locally):", err);
+        console.error("Failed to add project to Firestore:", err);
+        throw err;
       }
     }
 
@@ -221,12 +339,17 @@ export const PortfolioProvider = ({ children }) => {
     };
 
     if (firebaseStatus.isConfigured && firebaseStatus.db) {
+      if (!isAuthorizedAdmin) {
+        setIsAuthModalOpen(true);
+        throw new Error("Firestore writing is private. Please sign in as Christian Astill (astillcd@gmail.com) to edit projects.");
+      }
       try {
         const docRef = doc(firebaseStatus.db, "projects", id);
         await setDoc(docRef, fullData, { merge: true });
         console.log("Updated project in Firestore:", id);
       } catch (err) {
-        console.error("Failed to update project in Firestore (updating locally):", err);
+        console.error("Failed to update project in Firestore:", err);
+        throw err;
       }
     }
 
@@ -234,17 +357,20 @@ export const PortfolioProvider = ({ children }) => {
     const current = getLocalProjects();
     const updated = current.map((p) => (p.id === id ? { ...p, ...fullData } : p));
     saveLocalProjects(updated);
+
+    // Keep selectedProject state in sync if currently viewing
+    setSelectedProjectState((prev) => (prev?.id === id ? { ...prev, ...fullData } : prev));
   };
 
   const deleteProject = async (id) => {
     console.log("Deleting project with ID:", id);
 
-    // Optimistically update React state and LocalStorage immediately
-    const current = projects;
-    const updated = current.filter((p) => p.id !== id);
-    saveLocalProjects(updated);
-
     if (firebaseStatus.isConfigured && firebaseStatus.db) {
+      if (!isAuthorizedAdmin) {
+        setIsAuthModalOpen(true);
+        alert("Firestore Security: Only Christian Astill (astillcd@gmail.com) can delete projects. Please sign in.");
+        return;
+      }
       try {
         const docRef = doc(firebaseStatus.db, "projects", id);
         await deleteDoc(docRef);
@@ -252,13 +378,29 @@ export const PortfolioProvider = ({ children }) => {
       } catch (err) {
         console.error("Failed to delete project from Firestore:", err);
         alert(`Failed to delete project from Firestore: ${err.message}`);
+        return;
       }
+    }
+
+    // Optimistically update React state and LocalStorage immediately
+    const current = projects;
+    const updated = current.filter((p) => p.id !== id);
+    saveLocalProjects(updated);
+
+    // Reset selectedProject if deleted
+    if (selectedProject?.id === id) {
+      setSelectedProject(null);
     }
   };
 
   // Seed sample projects to Firestore when user clicks "Sync Demo Projects to Firebase"
   const syncDemoProjectsToFirebase = async () => {
     if (!firebaseStatus.isConfigured || !firebaseStatus.db) return false;
+    if (!isAuthorizedAdmin) {
+      setIsAuthModalOpen(true);
+      alert("Firestore Security: Only Christian Astill (astillcd@gmail.com) can sync data to Firestore. Please sign in.");
+      return false;
+    }
     try {
       for (const p of INITIAL_PROJECTS) {
         const docRef = doc(firebaseStatus.db, "projects", p.id);
@@ -301,6 +443,10 @@ export const PortfolioProvider = ({ children }) => {
         uploadMediaFile,
         adminMode,
         isViewOnly,
+        isCustomDomainRecruiter,
+        previewRecruiterMode,
+        toggleRecruiterPreview,
+        isFirebaseDefaultDomain: isFirebaseDefaultDomain(),
         toggleAdminMode,
         activeCategory,
         setActiveCategory,
@@ -313,7 +459,12 @@ export const PortfolioProvider = ({ children }) => {
         editingProject,
         setEditingProject,
         isConfigModalOpen,
-        setIsConfigModalOpen
+        setIsConfigModalOpen,
+        currentUser,
+        isAuthorizedAdmin,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        logoutAdmin
       }}
     >
       {children}

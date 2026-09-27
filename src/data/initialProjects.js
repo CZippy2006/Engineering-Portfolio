@@ -10,12 +10,37 @@ export const INITIAL_PROJECTS = [
     timeframe: "June 2025 to August 2026",
     featured: true,
     coverImage: "/demo-assets/robotics.png",
+    photos: [
+      {
+        id: "p1",
+        url: "/demo-assets/robotics.png",
+        caption: "Assembled 18-DOF hexapod chassis featuring carbon-reinforced leg mounts and high-torque digital servos."
+      },
+      {
+        id: "p2",
+        url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1200&q=80",
+        caption: "Custom 4-layer power distribution & motor controller PCB engineered for 60A burst capability."
+      },
+      {
+        id: "p3",
+        url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+        caption: "Finite element analysis (FEA) and stress testing on SolidWorks 3D leg pivot brackets."
+      }
+    ],
+    videos: [
+      {
+        id: "v1",
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        caption: "Field Test: Real-time RTAB-Map SLAM and autonomous terrain navigation over unstructured obstacles."
+      }
+    ],
     galleryImages: [
       "/demo-assets/robotics.png",
       "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=1200&q=80",
       "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80"
     ],
     videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    videoCaption: "Field Test: Real-time RTAB-Map SLAM and autonomous terrain navigation over unstructured obstacles.",
     summary: "Designed and engineered an 18-DOF autonomous hexapod robot using custom inverse kinematics, custom 4-layer motor driver PCBs, and onboard ROS2 spatial mapping.",
     description: `### Project Architecture & Design Highlights
 This platform was built from the ground up to explore legged locomotion in unstructured environments where wheeled robotics fail.
@@ -46,11 +71,31 @@ This platform was built from the ground up to explore legged locomotion in unstr
     timeframe: "November 2025 to June 2026",
     featured: true,
     coverImage: "/demo-assets/drone.png",
+    photos: [
+      {
+        id: "p1",
+        url: "/demo-assets/drone.png",
+        caption: "Custom 3mm CNC-milled 3K twill carbon fiber frame plate assembly with aerodynamic standoffs."
+      },
+      {
+        id: "p2",
+        url: "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=1200&q=80",
+        caption: "High-output 2306 2450KV brushless motors paired with 60A 4-in-1 ESC power stack."
+      }
+    ],
+    videos: [
+      {
+        id: "v1",
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        caption: "High-speed outdoor aerobatics test and low-latency digital video transmission flight recording."
+      }
+    ],
     galleryImages: [
       "/demo-assets/drone.png",
       "https://images.unsplash.com/photo-1527977966376-1c8408f9f108?auto=format&fit=crop&w=1200&q=80"
     ],
     videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    videoCaption: "High-speed outdoor aerobatics test and low-latency digital video transmission flight recording.",
     summary: "Built a 5-inch aerobatic quadcopter featuring custom 3mm carbon fiber frame arms, low-latency flight controller tuning, and live telemetry overlay.",
     description: `### Development Overview & Flight Dynamics
 Developed focusing on high power-to-weight ratio and ultra-low latency control systems for high speed precision flight.
@@ -81,11 +126,31 @@ Developed focusing on high power-to-weight ratio and ultra-low latency control s
     timeframe: "March 2025 to March 2026",
     featured: false,
     coverImage: "/demo-assets/embedded.png",
+    photos: [
+      {
+        id: "p1",
+        url: "/demo-assets/embedded.png",
+        caption: "Bench prototype showing high-speed dual BNC input stage and 3.5-inch SPI IPS display."
+      },
+      {
+        id: "p2",
+        url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80",
+        caption: "KiCad schematic layout highlighting high-impedance Op-Amp buffer stage and input protection diodes."
+      }
+    ],
+    videos: [
+      {
+        id: "v1",
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        caption: "Bench verification: 10 MS/s hardware DMA signal capture synchronized with web interface."
+      }
+    ],
     galleryImages: [
       "/demo-assets/embedded.png",
       "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80"
     ],
     videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+    videoCaption: "Bench verification: 10 MS/s hardware DMA signal capture synchronized with web interface.",
     summary: "Created a handheld oscilloscope instrument with custom analog front-end conditioning circuits, dual 5 MSPS ADC sampling, and wireless web interface.",
     description: `### Development Breakdown
 A hardware R&D project packing a benchtop oscilloscope into a portable aluminum body.
@@ -116,10 +181,25 @@ A hardware R&D project packing a benchtop oscilloscope into a portable aluminum 
     timeframe: "March 2026 to Present",
     featured: false,
     coverImage: "/demo-assets/robotics.png",
+    photos: [
+      {
+        id: "p1",
+        url: "/demo-assets/robotics.png",
+        caption: "SolidWorks 3D CAD assembly of cycloidal speed reducers integrated into articulated robotic arm."
+      }
+    ],
+    videos: [
+      {
+        id: "v1",
+        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+        caption: "Microsecond CAN bus loop test verifying zero-backlash joint position feedback."
+      }
+    ],
     galleryImages: [
       "/demo-assets/robotics.png"
     ],
     videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    videoCaption: "Microsecond CAN bus loop test verifying zero-backlash joint position feedback.",
     summary: "Developing a 6-axis articulated robotic arm featuring zero-backlash cycloidal reducers, closed-loop CAN bus servo drivers, and haptic glove control.",
     description: `### Active R&D Project
 Currently under active development focusing on custom cycloidal gearboxes 3D printed with Onyx carbon fiber and driven via CAN bus protocol.
