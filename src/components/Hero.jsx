@@ -72,22 +72,13 @@ export const Hero = () => {
                 lineHeight: 1.1,
                 fontWeight: 900,
                 letterSpacing: "-0.03em",
-                marginBottom: "0.4rem"
+                marginBottom: "1.25rem"
               }}>
                 <span className="gradient-text">CHRISTIAN ASTILL</span>
               </h1>
 
-              <div style={{
-                fontSize: "1.35rem",
-                fontWeight: 700,
-                color: "var(--text-main)",
-                marginBottom: "1rem"
-              }}>
-                Robotics, Embedded Systems & Hardware Engineering Log
-              </div>
-
               {/* Prominent LinkedIn & GitHub Links */}
-              <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
+              <div style={{ display: "flex", gap: "0.8rem", flexWrap: "wrap", marginBottom: "1.8rem" }}>
                 <a
                   href="https://www.linkedin.com/in/christian-astill-622945321"
                   target="_blank"
@@ -117,15 +108,6 @@ export const Hero = () => {
                   <span>GitHub Repositories</span>
                 </a>
               </div>
-
-              <p style={{
-                color: "var(--text-muted)",
-                fontSize: "1rem",
-                maxWidth: "680px",
-                marginBottom: "1.8rem"
-              }}>
-                Explore full engineering project breakdowns featuring mechanical CAD models, custom PCB layouts, ROS2 robotics nodes, and interactive development timeline milestones.
-              </p>
 
               {/* Quick Metrics Cards */}
               <div style={{

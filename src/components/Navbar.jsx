@@ -123,7 +123,7 @@ export const Navbar = () => {
                   background: firebaseConfigured ? "var(--accent-emerald)" : "var(--accent-amber)"
                 }}></span>
                 {isViewOnly
-                  ? (firebaseConfigured ? "Live Portfolio • Recruiter View" : "Engineering Showcase")
+                  ? (firebaseConfigured ? "Live Portfolio" : "Engineering Showcase")
                   : (firebaseConfigured ? "Firestore Sync • Editor Studio" : "Local Storage • Editor")}
               </div>
             </div>
@@ -247,26 +247,8 @@ export const Navbar = () => {
             </button>
           </div>
 
-          {/* Recruiter View: Clean view-only badge without any admin controls */}
-          {isViewOnly ? (
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "0.45rem",
-              padding: "0.45rem 0.9rem",
-              borderRadius: "9999px",
-              background: "rgba(0, 242, 254, 0.08)",
-              border: "1px solid rgba(0, 242, 254, 0.25)",
-              color: "var(--accent-cyan)",
-              fontSize: "0.8rem",
-              fontFamily: "var(--font-mono)",
-              fontWeight: 600
-            }}>
-              <Shield size={14} />
-              <span>Recruiter Showcase</span>
-            </div>
-          ) : (
-            /* Editor Studio Interface: engineering-portfolio-ba75a & localhost */
+          {/* Editor Studio Interface: only rendered on editor domain (engineering-portfolio-ba75a & localhost) */}
+          {!isViewOnly && (
             <>
               {/* Firebase Settings Button */}
               <button
