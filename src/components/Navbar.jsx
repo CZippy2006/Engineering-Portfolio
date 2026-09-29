@@ -122,9 +122,9 @@ export const Navbar = () => {
                   borderRadius: "50%",
                   background: firebaseConfigured ? "var(--accent-emerald)" : "var(--accent-amber)"
                 }}></span>
-                {isCustomDomainRecruiter
-                  ? (firebaseConfigured ? "Live Portfolio" : "Engineering Showcase")
-                  : (firebaseConfigured ? "Firestore Sync • Editor" : "Local Storage • Editor")}
+                {isViewOnly
+                  ? (firebaseConfigured ? "Live Portfolio • Recruiter View" : "Engineering Showcase")
+                  : (firebaseConfigured ? "Firestore Sync • Editor Studio" : "Local Storage • Editor")}
               </div>
             </div>
           </div>
@@ -247,8 +247,8 @@ export const Navbar = () => {
             </button>
           </div>
 
-          {/* Custom Domain Recruiter View: Clean view-only badge without any admin controls */}
-          {isCustomDomainRecruiter ? (
+          {/* Recruiter View: Clean view-only badge without any admin controls */}
+          {isViewOnly ? (
             <div style={{
               display: "flex",
               alignItems: "center",
@@ -263,39 +263,10 @@ export const Navbar = () => {
               fontWeight: 600
             }}>
               <Shield size={14} />
-              <span>Recruiter View</span>
-            </div>
-          ) : previewRecruiterMode ? (
-            /* Recruiter Preview on Editor Domains (with easy exit back to Edit Mode) */
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-              <div style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.4rem",
-                padding: "0.45rem 0.85rem",
-                borderRadius: "9999px",
-                background: "rgba(245, 158, 11, 0.12)",
-                border: "1px solid rgba(245, 158, 11, 0.3)",
-                color: "var(--accent-amber)",
-                fontSize: "0.8rem",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600
-              }}>
-                <Eye size={14} />
-                <span>Recruiter Preview (castillportfolio.com)</span>
-              </div>
-              <button
-                className="btn-primary"
-                onClick={toggleRecruiterPreview}
-                style={{ fontSize: "0.82rem", padding: "0.45rem 0.85rem", gap: "0.4rem" }}
-                title="Return to editing interface"
-              >
-                <Edit3 size={14} />
-                <span>Exit Preview (Back to Edit)</span>
-              </button>
+              <span>Recruiter Showcase</span>
             </div>
           ) : (
-            /* Editor Domains Interface: Default Firebase domains & localhost */
+            /* Editor Studio Interface: engineering-portfolio-ba75a & localhost */
             <>
               {/* Firebase Settings Button */}
               <button
@@ -359,16 +330,18 @@ export const Navbar = () => {
                 </button>
               )}
 
-              {/* Recruiter Preview Toggle */}
-              <button
+              {/* Direct link to dedicated Recruiter Project Site */}
+              <a
+                href="https://engineering-portfolio-recruite.web.app"
+                target="_blank"
+                rel="noreferrer"
                 className="btn-secondary"
-                onClick={toggleRecruiterPreview}
-                title="Preview what recruiters see on castillportfolio.com"
-                style={{ fontSize: "0.85rem", padding: "0.5rem 0.8rem", gap: "0.4rem" }}
+                title="Open dedicated Recruiter Project view (engineering-portfolio-recruite.web.app)"
+                style={{ fontSize: "0.85rem", padding: "0.5rem 0.8rem", gap: "0.4rem", textDecoration: "none" }}
               >
                 <Eye size={15} />
-                <span>Recruiter Preview</span>
-              </button>
+                <span>Recruiter Site ↗</span>
+              </a>
 
               {/* Admin Studio Toggle */}
               <button

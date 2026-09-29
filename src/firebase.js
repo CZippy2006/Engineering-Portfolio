@@ -71,9 +71,9 @@ export async function logoutUser() {
   if (!currentAuth) return;
   return await signOut(currentAuth);
 }
-const FIREBASE_CONFIG_KEY = "eng_portfolio_firebase_cfg";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
-const DEFAULT_FIREBASE_CONFIG = {
+export const EDITOR_FIREBASE_CONFIG = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyB2Mg67hGEx-1d4U_tugeSUpzSCIgV8p6g",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "engineering-portfolio-ba75a.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "engineering-portfolio-ba75a",
@@ -83,7 +83,29 @@ const DEFAULT_FIREBASE_CONFIG = {
   databaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || "projects"
 };
 
+export const RECRUITER_FIREBASE_CONFIG = {
+  apiKey: import.meta.env.VITE_RECRUITER_FIREBASE_API_KEY || "AIzaSyDInHnTku82eqNjplyhFJIhffUCgO7icQg",
+  authDomain: import.meta.env.VITE_RECRUITER_FIREBASE_AUTH_DOMAIN || "engineering-portfolio-recruite.firebaseapp.com",
+  projectId: import.meta.env.VITE_RECRUITER_FIREBASE_PROJECT_ID || "engineering-portfolio-recruite",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "engineering-portfolio-ba75a.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_RECRUITER_FIREBASE_MESSAGING_SENDER_ID || "659897094538",
+  appId: import.meta.env.VITE_RECRUITER_FIREBASE_APP_ID || "1:659897094538:web:1ddb77714cae4ce4d5b873",
+  measurementId: import.meta.env.VITE_RECRUITER_FIREBASE_MEASUREMENT_ID || "G-2986VEHD9H",
+  databaseId: "(default)"
+};
+
+const FIREBASE_CONFIG_KEY = "eng_portfolio_firebase_cfg";
+
+const DEFAULT_FIREBASE_CONFIG = EDITOR_FIREBASE_CONFIG;
+
+import { isRecruiterDomain } from "./utils/domainUtils";
+
 export function getSavedFirebaseConfig() {
+  // If on recruiter domain, connect directly to the recruiter project's Firestore database!
+  if (isRecruiterDomain()) {
+    return RECRUITER_FIREBASE_CONFIG;
+  }
+
   try {
     const stored = localStorage.getItem(FIREBASE_CONFIG_KEY);
     if (stored) {
@@ -113,6 +135,23 @@ let currentApp = null;
 let currentDb = null;
 let currentStorage = null;
 let currentAuth = null;
+let currentAnalytics = null;
+
+let recruiterAppInstance = null;
+let recruiterDbInstance = null;
+
+export function getRecruiterDb() {
+  try {
+    if (!recruiterDbInstance) {
+      recruiterAppInstance = initializeApp(RECRUITER_FIREBASE_CONFIG, "recruiterSync");
+      recruiterDbInstance = getFirestore(recruiterAppInstance);
+    }
+    return recruiterDbInstance;
+  } catch (e) {
+    console.warn("Could not initialize recruiterDbInstance:", e);
+    return null;
+  }
+}
 
 export function initFirebaseServices(config = null) {
   const cfg = config || getSavedFirebaseConfig();
@@ -121,7 +160,8 @@ export function initFirebaseServices(config = null) {
     currentDb = null;
     currentStorage = null;
     currentAuth = null;
-    return { isConfigured: false, db: null, storage: null, auth: null };
+    currentAnalytics = null;
+    return { isConfigured: false, db: null, storage: null, auth: null, analytics: null };
   }
 
   try {
@@ -132,10 +172,15 @@ export function initFirebaseServices(config = null) {
       currentApp = initializeApp(cfg);
     }
 
-    const dbId = cfg.databaseId || "projects";
+    const dbId = cfg.databaseId;
     try {
-      currentDb = getFirestore(currentApp, dbId);
-      console.log(`Connected to Firestore database '${dbId}'`);
+      if (dbId && dbId !== "(default)") {
+        currentDb = getFirestore(currentApp, dbId);
+        console.log(`Connected to Firestore database '${dbId}'`);
+      } else {
+        currentDb = getFirestore(currentApp);
+        console.log(`Connected to default Firestore database`);
+      }
     } catch (e) {
       console.warn(`Could not connect to Firestore database '${dbId}', falling back to default:`, e);
       currentDb = getFirestore(currentApp);
@@ -144,18 +189,32 @@ export function initFirebaseServices(config = null) {
     currentStorage = getStorage(currentApp);
     currentAuth = getAuth(currentApp);
 
+    // Initialize Firebase Analytics for Recruiter visits if supported in this environment
+    if (typeof window !== "undefined") {
+      isSupported().then((supported) => {
+        if (supported && currentApp) {
+          try {
+            currentAnalytics = getAnalytics(currentApp);
+          } catch (e) {
+            console.warn("Firebase Analytics could not be initialized:", e);
+          }
+        }
+      }).catch(() => {});
+    }
+
     return {
       isConfigured: true,
       app: currentApp,
       db: currentDb,
       storage: currentStorage,
-      auth: currentAuth
+      auth: currentAuth,
+      analytics: currentAnalytics
     };
   } catch (err) {
     console.error("Firebase Initialization Error:", err);
-    return { isConfigured: false, error: err.message, db: null, storage: null, auth: null };
+    return { isConfigured: false, error: err.message, db: null, storage: null, auth: null, analytics: null };
   }
 }
 
-export { currentDb as db, currentStorage as storage, currentAuth as auth };
+export { currentDb as db, currentStorage as storage, currentAuth as auth, currentAnalytics as analytics };
 

@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "deploy": "npm run build && npx firebase deploy",
+    "deploy": "npm run deploy:all",
+    "deploy:editor": "npm run build && firebase deploy --only hosting:editor --project engineering-portfolio-ba75a --non-interactive",
+    "deploy:recruiter": "npm run build && firebase deploy --only hosting:recruiter --project engineering-portfolio-recruite --non-interactive",
+    "deploy:all": "npm run deploy:editor && npm run deploy:recruiter",
     "lint": "eslint .",
     "preview": "vite preview"
   },

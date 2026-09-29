@@ -1,5 +1,24 @@
 {
   "projects": {
-    "default": "engineering-portfolio-ba75a"
+    "default": "engineering-portfolio-ba75a",
+    "editor": "engineering-portfolio-ba75a",
+    "recruiter": "engineering-portfolio-recruite"
+  },
+  "targets": {
+    "engineering-portfolio-ba75a": {
+      "hosting": {
+        "editor": [
+          "engineering-portfolio-ba75a"
+        ]
+      }
+    },
+    "engineering-portfolio-recruite": {
+      "hosting": {
+        "recruiter": [
+          "engineering-portfolio-recruite"
+        ]
+      }
+    }
   }
 }
+

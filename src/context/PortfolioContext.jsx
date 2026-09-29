@@ -5,7 +5,8 @@ import {
   saveFirebaseConfig, 
   initFirebaseServices,
   isUserAuthorizedAdmin,
-  logoutUser
+  logoutUser,
+  getRecruiterDb
 } from "../firebase";
 import { 
   collection, 
@@ -317,6 +318,18 @@ export const PortfolioProvider = ({ children }) => {
         const docRef = doc(firebaseStatus.db, "projects", projId);
         await setDoc(docRef, newProj);
         console.log("Saved project to Firestore with ID:", projId);
+
+        // Also sync to recruiter Firestore database
+        try {
+          const recDb = getRecruiterDb();
+          if (recDb) {
+            await setDoc(doc(recDb, "projects", projId), newProj);
+            console.log("Synced project to recruiter Firestore database:", projId);
+          }
+        } catch (syncErr) {
+          console.warn("Recruiter database sync notice:", syncErr);
+        }
+
         return newProj;
       } catch (err) {
         console.error("Failed to add project to Firestore:", err);
@@ -347,6 +360,17 @@ export const PortfolioProvider = ({ children }) => {
         const docRef = doc(firebaseStatus.db, "projects", id);
         await setDoc(docRef, fullData, { merge: true });
         console.log("Updated project in Firestore:", id);
+
+        // Also sync to recruiter Firestore database
+        try {
+          const recDb = getRecruiterDb();
+          if (recDb) {
+            await setDoc(doc(recDb, "projects", id), fullData, { merge: true });
+            console.log("Synced update to recruiter Firestore database:", id);
+          }
+        } catch (syncErr) {
+          console.warn("Recruiter database sync notice:", syncErr);
+        }
       } catch (err) {
         console.error("Failed to update project in Firestore:", err);
         throw err;
@@ -375,6 +399,17 @@ export const PortfolioProvider = ({ children }) => {
         const docRef = doc(firebaseStatus.db, "projects", id);
         await deleteDoc(docRef);
         console.log("Successfully deleted project from Firestore:", id);
+
+        // Also sync deletion to recruiter Firestore database
+        try {
+          const recDb = getRecruiterDb();
+          if (recDb) {
+            await deleteDoc(doc(recDb, "projects", id));
+            console.log("Synced deletion to recruiter Firestore database:", id);
+          }
+        } catch (syncErr) {
+          console.warn("Recruiter database sync notice:", syncErr);
+        }
       } catch (err) {
         console.error("Failed to delete project from Firestore:", err);
         alert(`Failed to delete project from Firestore: ${err.message}`);
@@ -402,9 +437,13 @@ export const PortfolioProvider = ({ children }) => {
       return false;
     }
     try {
+      const recDb = getRecruiterDb();
       for (const p of INITIAL_PROJECTS) {
         const docRef = doc(firebaseStatus.db, "projects", p.id);
         await setDoc(docRef, p);
+        if (recDb) {
+          await setDoc(doc(recDb, "projects", p.id), p);
+        }
       }
       return true;
     } catch (e) {
