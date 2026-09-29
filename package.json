@@ -7,9 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "deploy": "npm run deploy:all",
-    "deploy:editor": "npm run build && firebase deploy --only hosting:editor --project engineering-portfolio-ba75a --non-interactive",
+    "deploy:editor": "npm run build && firebase deploy --only hosting:editor,hosting:public --project engineering-portfolio-ba75a --non-interactive",
     "deploy:recruiter": "npm run build && firebase deploy --only hosting:recruiter --project engineering-portfolio-recruite --non-interactive",
-    "deploy:all": "npm run deploy:editor && npm run deploy:recruiter",
+    "deploy:all": "npm run build && firebase deploy --only hosting:editor,hosting:public --project engineering-portfolio-ba75a --non-interactive && firebase deploy --only hosting:recruiter --project engineering-portfolio-recruite --non-interactive",
     "lint": "eslint .",
     "preview": "vite preview"
   },

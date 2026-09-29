@@ -9,6 +9,9 @@
       "hosting": {
         "editor": [
           "engineering-portfolio-ba75a"
+        ],
+        "public": [
+          "engineering-portfolio-public"
         ]
       }
     },

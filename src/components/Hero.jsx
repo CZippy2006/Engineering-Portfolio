@@ -47,24 +47,6 @@ export const Hero = () => {
             alignItems: "center"
           }}>
             <div>
-              {/* Badge */}
-              <div style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                padding: "0.35rem 0.8rem",
-                borderRadius: "9999px",
-                background: "rgba(0, 242, 254, 0.08)",
-                border: "1px solid rgba(0, 242, 254, 0.25)",
-                color: "var(--accent-cyan)",
-                fontSize: "0.8rem",
-                fontFamily: "var(--font-mono)",
-                fontWeight: 600,
-                marginBottom: "1.2rem"
-              }}>
-                <Sparkles size={14} />
-                <span>INTERACTIVE ENGINEERING LOG & SPECIFICATIONS</span>
-              </div>
 
               {/* Christian Astill Primary Title */}
               <h1 style={{

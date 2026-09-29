@@ -123,7 +123,7 @@ export const Navbar = () => {
                   background: firebaseConfigured ? "var(--accent-emerald)" : "var(--accent-amber)"
                 }}></span>
                 {isViewOnly
-                  ? (firebaseConfigured ? "Live Portfolio" : "Engineering Showcase")
+                  ? "Live Portfolio"
                   : (firebaseConfigured ? "Firestore Sync • Editor Studio" : "Local Storage • Editor")}
               </div>
             </div>
