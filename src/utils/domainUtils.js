@@ -19,11 +19,14 @@ export const isRecruiterDomain = () => {
     // Ignore in non-browser env
   }
 
-  // 1. Dedicated Recruiter Firebase Project domains
+  // 1. Dedicated Recruiter Firebase Project domains & Public domain
   if (
     hostname.includes("engineering-portfolio-recruite") ||
+    hostname.includes("engineering-portfolio-public") ||
     hostname === "engineering-portfolio-recruite.web.app" ||
-    hostname === "engineering-portfolio-recruite.firebaseapp.com"
+    hostname === "engineering-portfolio-public.web.app" ||
+    hostname === "engineering-portfolio-recruite.firebaseapp.com" ||
+    hostname === "engineering-portfolio-public.firebaseapp.com"
   ) {
     return true;
   }

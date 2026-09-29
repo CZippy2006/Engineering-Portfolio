@@ -176,31 +176,20 @@ export const PortfolioProvider = ({ children }) => {
   const getLocalProjects = () => {
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_PROJECTS_KEY);
-      if (stored) {
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge photos/videos captions from initial projects if previously saved without them
-          const upgraded = parsed.map((p) => {
-            const initial = INITIAL_PROJECTS.find((ip) => ip.id === p.id);
-            if (initial) {
-              return {
-                ...initial,
-                ...p,
-                photos: p.photos && p.photos.length > 0 ? p.photos : initial.photos,
-                videos: p.videos && p.videos.length > 0 ? p.videos : initial.videos
-              };
-            }
-            return p;
-          });
-          return upgraded;
+        if (Array.isArray(parsed)) {
+          return parsed;
         }
       }
     } catch (e) {
       console.error("Failed to read local projects:", e);
     }
-    // Save initial sample projects if never saved before
-    localStorage.setItem(LOCAL_STORAGE_PROJECTS_KEY, JSON.stringify(INITIAL_PROJECTS));
-    return INITIAL_PROJECTS;
+    // If truly first time and not in view-only recruiter mode, offer initial demo projects
+    if (!isViewOnly) {
+      return INITIAL_PROJECTS;
+    }
+    return [];
   };
 
   const saveLocalProjects = (newProjects) => {
@@ -219,19 +208,12 @@ export const PortfolioProvider = ({ children }) => {
       
       const unsubscribe = onSnapshot(
         q,
-        async (snapshot) => {
-          // If Firestore is empty AND we have never auto-seeded Firestore for this user, seed INITIAL_PROJECTS once
-          const hasSeeded = localStorage.getItem(HAS_SEEDED_KEY);
-          if (snapshot.empty && !hasSeeded) {
-            console.log("Firestore empty on first connection. Auto-seeding initial projects...");
-            localStorage.setItem(HAS_SEEDED_KEY, "true");
-            try {
-              for (const p of INITIAL_PROJECTS) {
-                await setDoc(doc(services.db, "projects", p.id), p);
-              }
-            } catch (e) {
-              console.error("Failed to auto-seed Firestore:", e);
-            }
+        (snapshot) => {
+          if (snapshot.empty) {
+            console.log("Firestore projects collection is currently empty.");
+            setProjects([]);
+            localStorage.setItem(LOCAL_STORAGE_PROJECTS_KEY, JSON.stringify([]));
+            setLoading(false);
             return;
           }
 
