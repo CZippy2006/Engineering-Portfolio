@@ -13,7 +13,9 @@ import {
   Film,
   Image as ImageIcon,
   ExternalLink,
-  PlusCircle
+  PlusCircle,
+  Zap,
+  UploadCloud
 } from "lucide-react";
 
 export const AdminEditorModal = () => {
@@ -54,6 +56,8 @@ export const AdminEditorModal = () => {
   const [newTagInput, setNewTagInput] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingPhotoIndex, setUploadingPhotoIndex] = useState(null);
+  const [batchUploading, setBatchUploading] = useState(false);
+  const [batchUploadCount, setBatchUploadCount] = useState(0);
 
   useEffect(() => {
     if (!isNew && editingProject) {
@@ -113,6 +117,7 @@ export const AdminEditorModal = () => {
       alert("Failed to upload cover image.");
     } finally {
       setUploadingCover(false);
+      e.target.value = "";
     }
   };
 
@@ -153,6 +158,60 @@ export const AdminEditorModal = () => {
       alert("Failed to upload image file.");
     } finally {
       setUploadingPhotoIndex(null);
+      e.target.value = "";
+    }
+  };
+
+  // Ultra-Fast Parallel Batch Photo Upload Handler
+  const handleBatchPhotoUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setBatchUploading(true);
+    setBatchUploadCount(files.length);
+
+    try {
+      // Process and compress all files in parallel via native canvas (~40ms each)
+      const uploadPromises = files.map(async (file, i) => {
+        try {
+          const url = await uploadMediaFile(file);
+          if (!url) return null;
+
+          // Auto-generate clean caption from filename: "custom_pcb_schematic.png" -> "Custom pcb schematic"
+          const cleanName = file.name
+            .replace(/\.[^/.]+$/, "")
+            .replace(/[-_]/g, " ")
+            .trim();
+          const starterCaption = cleanName 
+            ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1) 
+            : "";
+
+          return {
+            id: `photo-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
+            url,
+            caption: starterCaption
+          };
+        } catch (err) {
+          console.error("Batch upload file error:", err);
+          return null;
+        }
+      });
+
+      const newPhotos = (await Promise.all(uploadPromises)).filter(Boolean);
+
+      if (newPhotos.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          photos: [...prev.photos, ...newPhotos]
+        }));
+      }
+    } catch (err) {
+      console.error("Batch photo upload error:", err);
+      alert("Failed to upload some photos.");
+    } finally {
+      setBatchUploading(false);
+      setBatchUploadCount(0);
+      e.target.value = "";
     }
   };
 
@@ -484,7 +543,7 @@ export const AdminEditorModal = () => {
                     onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
                   />
                   <label className="btn-secondary" style={{ cursor: "pointer", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
-                    <Upload size={14} /> {uploadingCover ? "Uploading..." : "Upload Photo"}
+                    <Upload size={14} /> {uploadingCover ? "Optimizing & Uploading..." : "Upload Photo"}
                     <input type="file" accept="image/*" onChange={handleCoverUpload} style={{ display: "none" }} />
                   </label>
                 </div>
@@ -540,15 +599,63 @@ export const AdminEditorModal = () => {
                 </p>
               </div>
 
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={handleAddPhoto}
-                style={{ fontSize: "0.82rem", padding: "0.45rem 0.85rem", gap: "0.4rem" }}
-              >
-                <Plus size={15} /> Add Photo with Caption
-              </button>
+              <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap" }}>
+                <label
+                  className="btn-primary"
+                  style={{
+                    cursor: batchUploading ? "not-allowed" : "pointer",
+                    fontSize: "0.82rem",
+                    padding: "0.45rem 0.9rem",
+                    gap: "0.45rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    background: "linear-gradient(135deg, #1d4ed8, #0284c7)",
+                    boxShadow: "0 0 12px rgba(2, 132, 199, 0.35)",
+                    border: "1px solid rgba(56, 189, 248, 0.4)",
+                    opacity: batchUploading ? 0.7 : 1
+                  }}
+                  title="Select multiple images to compress and upload simultaneously"
+                >
+                  <Zap size={14} style={{ color: "#fef08a" }} />
+                  {batchUploading ? `Uploading ${batchUploadCount} Photos...` : "⚡ Upload Multiple Photos"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    disabled={batchUploading}
+                    onChange={handleBatchPhotoUpload}
+                    style={{ display: "none" }}
+                  />
+                </label>
+
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={handleAddPhoto}
+                  style={{ fontSize: "0.82rem", padding: "0.45rem 0.85rem", gap: "0.4rem" }}
+                >
+                  <Plus size={15} /> Add Single Photo
+                </button>
+              </div>
             </div>
+
+            {batchUploading && (
+              <div style={{
+                background: "rgba(14, 165, 233, 0.12)",
+                border: "1px solid rgba(56, 189, 248, 0.35)",
+                padding: "0.65rem 1rem",
+                borderRadius: "var(--radius-sm)",
+                marginBottom: "0.9rem",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.6rem",
+                fontSize: "0.84rem",
+                color: "var(--accent-cyan)"
+              }}>
+                <Zap size={15} style={{ animation: "pulse 1.2s infinite" }} />
+                <span>Client-side compressing and uploading {batchUploadCount} photos in parallel... moments away!</span>
+              </div>
+            )}
 
             {formData.photos.length === 0 ? (
               <div style={{
@@ -602,7 +709,7 @@ export const AdminEditorModal = () => {
                           onChange={(e) => handleUpdatePhoto(idx, "url", e.target.value)}
                         />
                         <label className="btn-secondary" style={{ cursor: "pointer", fontSize: "0.78rem", whiteSpace: "nowrap" }}>
-                          <Upload size={13} /> {uploadingPhotoIndex === idx ? "Uploading..." : "Upload File"}
+                          <Upload size={13} /> {uploadingPhotoIndex === idx ? "Optimizing..." : "Upload File"}
                           <input type="file" accept="image/*" onChange={(e) => handlePhotoFileUpload(e, idx)} style={{ display: "none" }} />
                         </label>
                       </div>
